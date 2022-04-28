@@ -22,11 +22,7 @@ fn handle_query(socket: &UdpSocket) -> Result<(), std::io::Error> {
 }
 
 pub fn serve() -> Result<(), std::io::Error> {
-    // Bind an UDP socket on port 2053
     let socket = UdpSocket::bind(("0.0.0.0", 2053))?;
-
-    // For now, queries are handled sequentially, so an infinite loop for servicing
-    // requests is initiated.
     loop {
         match handle_query(&socket) {
             Ok(_) => {},
