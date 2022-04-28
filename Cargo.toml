@@ -1,0 +1,8 @@
+[package]
+name = "bhdns"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+packed_struct = "0.10"
+dns-parser = "0.8.0"
