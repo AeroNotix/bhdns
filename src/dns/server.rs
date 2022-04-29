@@ -1,22 +1,19 @@
-use std::convert::{TryFrom};
+use crate::dns::protocol::Packet;
+use std::convert::TryFrom;
 use std::net::UdpSocket;
-use crate::dns::protocol::Header;
 
 fn handle_query(socket: &UdpSocket) -> Result<(), std::io::Error> {
-    let mut buf = [0; 512];
-
+    let mut buf = [0; 65535];
     let (_, src) = socket.recv_from(&mut buf)?;
 
-    println!("{:?}", buf);
+    let packet = Packet::try_from(Vec::from(buf)).unwrap();
+    for question in packet.questions {
+        println!("{:?}", question);
+    }
 
-    let header = Header::try_from(&buf[0 .. 12]).unwrap();
-    println!("{}", header);
-    println!("{:?}", header.response_code);
-
-
-    socket.send_to(&buf, "8.8.8.8:53")?;
+    socket.send_to(&buf[0..512], "8.8.8.8:53")?;
     socket.recv_from(&mut buf)?;
-    socket.send_to(&buf, src)?;
+    socket.send_to(&buf[0..512], src)?;
 
     Ok(())
 }
@@ -25,7 +22,7 @@ pub fn serve() -> Result<(), std::io::Error> {
     let socket = UdpSocket::bind(("0.0.0.0", 2053))?;
     loop {
         match handle_query(&socket) {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(e) => eprintln!("An error occurred: {}", e),
         }
     }
