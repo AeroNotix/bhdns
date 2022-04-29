@@ -11,6 +11,7 @@ fn handle_query(socket: &UdpSocket) -> Result<(), std::io::Error> {
         println!("{:?}", question);
     }
 
+    // To make things work, just use quad 8 and copy
     socket.send_to(&buf[0..512], "8.8.8.8:53")?;
     socket.recv_from(&mut buf)?;
     socket.send_to(&buf[0..512], src)?;
