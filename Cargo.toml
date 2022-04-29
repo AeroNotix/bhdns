@@ -6,3 +6,4 @@ edition = "2018"
 [dependencies]
 packed_struct = "0.10"
 dns-parser = "0.8.0"
+tokio = { version = "1.18.0", features = ["full"] }

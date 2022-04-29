@@ -6,13 +6,13 @@ use dns::server;
 
 use std::fs::read;
 
-fn main() -> Result<(), PackingError> {
-    println!(
-        "{:?}",
-        read("/home/xeno/dev/bhdns/fixtures/google-query.bin").unwrap()
-    );
+#[tokio::main]
+async fn main() -> Result<(), PackingError> {
 
-    server::serve().unwrap();
+
+    println!("{:?}", read("/home/xeno/dev/bhdns/fixtures/google-query.bin").unwrap());
+
+    server::serve().await.unwrap();
 
     Ok(())
 }
