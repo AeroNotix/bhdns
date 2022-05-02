@@ -1,28 +1,27 @@
 use crate::dns::protocol::Packet;
 use std::convert::TryFrom;
-use std::net::UdpSocket;
+use tokio::net::UdpSocket;
 
-fn handle_query(socket: &UdpSocket) -> Result<(), std::io::Error> {
-    let mut buf = [0; 65535];
-    let (_, src) = socket.recv_from(&mut buf)?;
+async fn handle_query(socket: &UdpSocket) -> Result<(), std::io::Error> {
+    let mut buf = [0; 512];
+
+    let (_, src) = socket.recv_from(&mut buf).await?;
 
     let packet = Packet::try_from(Vec::from(buf)).unwrap();
-    for question in packet.questions {
-        println!("{:?}", question);
-    }
+    dbg!(packet.questions);
 
-    socket.send_to(&buf[0..512], "8.8.8.8:53")?;
-    socket.recv_from(&mut buf)?;
-    socket.send_to(&buf[0..512], src)?;
+    socket.send_to(&buf, "8.8.8.8:53").await?;
+    socket.recv_from(&mut buf).await?;
+    socket.send_to(&buf, src).await?;
 
     Ok(())
 }
 
-pub fn serve() -> Result<(), std::io::Error> {
-    let socket = UdpSocket::bind(("0.0.0.0", 2053))?;
+pub async fn serve() -> Result<(), std::io::Error> {
+    let socket = UdpSocket::bind(("0.0.0.0", 2053)).await?;
     loop {
-        match handle_query(&socket) {
-            Ok(_) => {}
+        match handle_query(&socket).await {
+            Ok(_) => {},
             Err(e) => eprintln!("An error occurred: {}", e),
         }
     }
