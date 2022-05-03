@@ -9,8 +9,9 @@ async fn handle_query(socket: &UdpSocket) -> Result<(), std::io::Error> {
 
     let packet = Packet::try_from(Vec::from(buf)).unwrap();
     dbg!(packet.questions);
+    // dbg!(packet.answers);
 
-    // To make things work, just use quad 8 and copy
+    // to make things work, just use quad 8 and copy
     socket.send_to(&buf, "8.8.8.8:53").await?;
     socket.recv_from(&mut buf).await?;
     socket.send_to(&buf, src).await?;
@@ -22,7 +23,7 @@ pub async fn serve() -> Result<(), std::io::Error> {
     let socket = UdpSocket::bind(("0.0.0.0", 2053)).await?;
     loop {
         match handle_query(&socket).await {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(e) => eprintln!("An error occurred: {}", e),
         }
     }

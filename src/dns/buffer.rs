@@ -5,10 +5,7 @@ pub struct Buffer {
 
 impl Buffer {
     pub fn new(buf: Vec<u8>) -> Buffer {
-        Buffer {
-            position: 0,
-            buf,
-        }
+        Buffer { position: 0, buf }
     }
 
     pub fn read_u8(&mut self) -> u8 {

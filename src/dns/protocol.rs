@@ -15,6 +15,8 @@ pub enum ResponseCode {
 
 /*
 
+From: https://datatracker.ietf.org/doc/html/rfc1035#section-4.1.1
+
 DNS header packet layout
 
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
@@ -171,52 +173,73 @@ pub struct Question {
     qclass: u16, //QueryClass,
 }
 
-fn parse_questions(count: u16, buf: Vec<u8>) -> Result<Vec<Question>, ()> {
-    let mut questions = Vec::with_capacity(count as usize);
-    let mut b = Buffer::new(buf);
-    // 13 because headers are 12 big
-    let offset = 12;
-    b.seek(offset);
+impl Question {
+    fn parse(count: u16, buf: Vec<u8>) -> Result<Vec<Question>, ()> {
+        let mut questions = Vec::with_capacity(count as usize);
+        let mut b = Buffer::new(buf);
+        // 13 because headers are 12 big
+        let offset = 12;
+        b.seek(offset);
 
-    println!("{}", count);
-    // TODO handle jumps
-    for _ in 0..count {
-        let mut join = "";
-        let mut qname = String::new();
-        loop {
-            let label_size = b.read_u8();
-            if label_size == 0 {
-                break;
+        println!("{}", count);
+        // TODO handle jumps
+        for _ in 0..count {
+            let mut join = "";
+            let mut qname = String::new();
+            loop {
+                let label_size = b.read_u8();
+                if label_size == 0 {
+                    break;
+                }
+                println!("label size: {}", label_size);
+                let label = b.read_sized(label_size as usize);
+                qname.push_str(join);
+                qname.push_str(&String::from_utf8_lossy(label));
+                join = ".";
             }
-            println!("label size: {}", label_size);
-            let label = b.read_sized(label_size as usize);
-            qname.push_str(join);
-            qname.push_str(&String::from_utf8_lossy(label));
-            join = ".";
+            let qtype = b.read_u8();
+            let qclass = b.read_u16();
+            questions.push(Question {
+                qname,
+                qtype,
+                qclass,
+            });
         }
-        let qtype = b.read_u8();
-        let qclass = b.read_u16();
-        questions.push(Question {
-            qname,
-            qtype,
-            qclass,
-        });
-    }
 
-    Ok(questions)
+        Ok(questions)
+    }
+}
+
+#[derive(Debug)]
+pub struct Answer {
+    // TODO Parse these into the enum
+    qname: String,
+    address: u64,
+}
+
+impl Answer {
+    fn parse(count: u16, buf: Vec<u8>) -> Result<Vec<Answer>, ()> {
+        return Ok(Vec::new());
+    }
 }
 
 pub struct Packet {
     pub header: Header,
     pub questions: Vec<Question>,
+    // pub answers: Vec<Answer>,
 }
 
 impl TryFrom<Vec<u8>> for Packet {
     type Error = PackingError;
     fn try_from(buf: Vec<u8>) -> Result<Self, Self::Error> {
         let header = Header::unpack_from_slice(&buf[0..12])?;
-        let questions = parse_questions(header.questions, buf).unwrap();
-        Ok(Packet { header, questions })
+        let questions = Question::parse(header.questions, buf).unwrap();
+        // let answers = Answer::parse(header.answers, buf).unwrap();
+        Ok(Packet {
+            header,
+            questions,
+            // answers,
+        })
     }
 }
 
