@@ -2,6 +2,7 @@ use crate::dns::buffer::Buffer;
 use packed_struct::prelude::*;
 use std::convert::{Into, TryFrom};
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(PrimitiveEnum_u8, Clone, Copy, Debug, PartialEq)]
 pub enum ResponseCode {
     NOERROR = 0,
@@ -97,6 +98,7 @@ impl TryFrom<&[u8]> for Header {
     }
 }
 
+#[allow(clippy::upper_case_acronyms)]
 pub enum QueryType {
     // Source: https://en.wikipedia.org/wiki/List_of_DNS_record_types
     A = 1,
@@ -151,6 +153,7 @@ pub enum QueryType {
     ZONEMD = 63,
 }
 
+#[allow(clippy::upper_case_acronyms)]
 pub enum QueryClass {
     INTERNET = 0x0001,
     CSNET = 0x0002,
