@@ -7,7 +7,7 @@ impl Buffer {
     pub fn new(buf: Vec<u8>) -> Buffer {
         Buffer {
             position: 0,
-            buf: Vec::from(buf),
+            buf,
         }
     }
 
