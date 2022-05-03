@@ -14,40 +14,7 @@ pub enum ResponseCode {
 }
 
 /*
-
 From: https://datatracker.ietf.org/doc/html/rfc1035#section-4.1.1
-
-DNS header packet layout
-
-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-| 0| 1| 2| 3| 4| 5| 6| 7| 0| 1| 2| 3| 4| 5| 6| 7|
-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-|                      ID                       |
-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-|QR| Opcode |AA|TC|RD|RA|  Z  |      RCODE      |
-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-|                    QDCOUNT                    |
-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-|                    ANCOUNT                    |
-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-|                    NSCOUNT                    |
-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-|                    ARCOUNT                    |
-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-
-ID: any arbitrary 16 bit identifier, the ID should be passed back in
-responses to queries.
-
-QR: 0 = query, 1 = response
-Opcode: 4 bits representing the type of response. See ResponseCode.
-AA: authoritative answer
-TC: is message truncated?
-RD: is recursion desired?
-RA: is recursion available?
-Z:  unused / future use. I think this can get used for secure DNS?
-QDCOUNT: count of questions
-ANCOUNT: count of answers
-ARCOUNT: count of additional records
 */
 
 #[derive(Debug, PackedStruct)]
