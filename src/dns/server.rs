@@ -8,12 +8,14 @@ async fn handle_query(socket: &UdpSocket) -> Result<(), std::io::Error> {
     let (_, src) = socket.recv_from(&mut buf).await?;
 
     let packet = Packet::try_from(Vec::from(buf)).unwrap();
-    dbg!(packet.questions);
+    dbg!(packet);
     // dbg!(packet.answers);
 
     // to make things work, just use quad 8 and copy
     socket.send_to(&buf, "8.8.8.8:53").await?;
     socket.recv_from(&mut buf).await?;
+    let packet2 = Packet::try_from(Vec::from(buf)).unwrap();
+    dbg!(packet2);
     socket.send_to(&buf, src).await?;
 
     Ok(())

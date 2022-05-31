@@ -141,72 +141,115 @@ pub struct Question {
 }
 
 impl Question {
-    fn parse(count: u16, buf: Vec<u8>) -> Result<Vec<Question>, ()> {
-        let mut questions = Vec::with_capacity(count as usize);
-        let mut b = Buffer::new(buf);
-        // 13 because headers are 12 big
-        let offset = 12;
-        b.seek(offset);
-
-        println!("{}", count);
-        // TODO handle jumps
-        for _ in 0..count {
-            let mut join = "";
-            let mut qname = String::new();
-            loop {
-                let label_size = b.read_u8();
-                if label_size == 0 {
-                    break;
-                }
-                println!("label size: {}", label_size);
-                let label = b.read_sized(label_size as usize);
-                qname.push_str(join);
-                qname.push_str(&String::from_utf8_lossy(label));
-                join = ".";
+    fn read(buf: &mut Buffer) -> Result<Question, PackingError> {
+        let mut join = "";
+        let mut qname = String::new();
+        loop {
+            let label_size = buf.read_u8();
+            if label_size == 0 {
+                break;
             }
-            let qtype = b.read_u8();
-            let qclass = b.read_u16();
-            questions.push(Question {
-                qname,
-                qtype,
-                qclass,
-            });
+            println!("label size: {}", label_size);
+            let label = buf.read_sized(label_size as usize);
+            qname.push_str(join);
+            qname.push_str(&String::from_utf8_lossy(label.as_slice()));
+            join = ".";
         }
-
-        Ok(questions)
+        let qtype = buf.read_u8();
+        let qclass = buf.read_u16();
+        Ok(Question {
+            qname,
+            qtype,
+            qclass,
+        })
     }
 }
 
+/*
+
+https://datatracker.ietf.org/doc/html/rfc1035#section-4.1.3
+
+*/
 #[derive(Debug)]
-pub struct Answer {
+pub struct ResourceRecord {
     // TODO Parse these into the enum
     qname: String,
     address: u64,
 }
 
-impl Answer {
-    fn parse(count: u16, buf: Vec<u8>) -> Result<Vec<Answer>, ()> {
-        return Ok(Vec::new());
+impl ResourceRecord {
+    fn read(buf: &mut Buffer) -> Result<ResourceRecord, PackingError> {
+        let qname = buf.read_name();
+        let qtype = buf.read_u16();
+        let qclass = buf.read_u16();
+        {
+            // 32 bit ttl
+            buf.read_u16();
+            buf.read_u16();
+        }
+        let size = buf.read_u16();
+        let rdata = buf.read_sized(size as usize);
+        dbg!(qtype);
+        dbg!(qclass);
+        dbg!(rdata);
+        Ok(ResourceRecord{qname: qname, address:112233})
     }
 }
 
+#[derive(Debug)]
 pub struct Packet {
     pub header: Header,
     pub questions: Vec<Question>,
-    // pub answers: Vec<Answer>,
+    pub answers: Vec<ResourceRecord>,
+    pub authority: Vec<ResourceRecord>,
+    pub additional: Vec<ResourceRecord>,
+}
+
+impl Packet {
+    fn new(header: Header) -> Packet {
+        let questions = Vec::with_capacity(header.questions as usize);
+        let answers = Vec::with_capacity(header.answers as usize);
+        let authority = Vec::with_capacity(header.authoritative_entries as usize);
+        let additional = Vec::with_capacity(header.additional_records as usize);
+        Packet {
+            header,
+            answers,
+            questions,
+            authority,
+            additional,
+        }
+    }
 }
 
 impl TryFrom<Vec<u8>> for Packet {
     type Error = PackingError;
     fn try_from(buf: Vec<u8>) -> Result<Self, Self::Error> {
         let header = Header::unpack_from_slice(&buf[0..12])?;
-        let questions = Question::parse(header.questions, buf).unwrap();
-        // let answers = Answer::parse(header.answers, buf).unwrap();
-        Ok(Packet {
-            header,
-            questions,
-            // answers,
-        })
+        let mut reader = Buffer::new(buf);
+
+        // 13 because headers are 12 big
+        let offset = 12;
+        reader.seek(offset);
+
+        let mut packet = Packet::new(header);
+
+        for _ in 0..packet.header.questions {
+            packet.questions.push(Question::read(&mut reader)?);
+        }
+
+        for _ in 0..packet.header.answers {
+            packet.answers.push(ResourceRecord::read(&mut reader)?);
+        }
+
+        for _ in 0..packet.header.authoritative_entries {
+            packet.authority.push(ResourceRecord::read(&mut reader)?);
+        }
+
+        for _ in 0..packet.header.additional_records {
+            packet.additional.push(ResourceRecord::read(&mut reader)?);
+        }
+
+        Ok(packet)
     }
 }
 
